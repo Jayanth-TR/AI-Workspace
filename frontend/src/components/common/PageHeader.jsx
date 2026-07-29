@@ -1,0 +1,2 @@
+import { Box, Typography } from '@mui/material'
+export default function PageHeader({ eyebrow, title, description, action }) { return <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'end', justifyContent: 'space-between', gap: 2, mb: 3.5 }}><Box>{eyebrow && <Typography color="primary" fontSize={12} fontWeight={700} letterSpacing={1} textTransform="uppercase" mb={.75}>{eyebrow}</Typography>}<Typography variant="h4" sx={{ fontWeight: 700, mb: .7 }}>{title}</Typography>{description && <Typography color="text.secondary">{description}</Typography>}</Box>{action}</Box> }
