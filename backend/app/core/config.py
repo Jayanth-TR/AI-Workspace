@@ -1,3 +1,4 @@
+import os
 # pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings
 
@@ -14,7 +15,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    DATABASE_URL: str = "postgresql://postgres:postgres123@localhost:5432/ai_workspace"
+    DATABASE_URL: str = ""
 
     OPENAI_API_KEY: str = ""
     TAVILY_API_KEY: str = ""
@@ -25,3 +26,9 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Fix DATABASE_URL for Render & cloud deployments
+if not settings.DATABASE_URL or "localhost" in settings.DATABASE_URL and not os.getenv("DATABASE_URL"):
+    settings.DATABASE_URL = "sqlite:///./ai_workspace.db"
+elif settings.DATABASE_URL.startswith("postgres://"):
+    settings.DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)
