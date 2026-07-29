@@ -64,25 +64,15 @@ class AgentRouterService:
         # Fallback to LLM Classification if client is available
         if self.client:
             try:
-                try:
-                    res = self.client.responses.create(
-                        model="gpt-4.1-mini",
-                        input=[
-                            {"role": "system", "content": TOOL_CLASSIFICATION_PROMPT},
-                            {"role": "user", "content": f"User Prompt: {prompt}"}
-                        ]
-                    )
-                    raw_output = res.output_text.strip()
-                except Exception:
-                    res = self.client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": TOOL_CLASSIFICATION_PROMPT},
-                            {"role": "user", "content": f"User Prompt: {prompt}"}
-                        ],
-                        response_format={"type": "json_object"}
-                    )
-                    raw_output = res.choices[0].message.content
+                res = self.client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": TOOL_CLASSIFICATION_PROMPT},
+                        {"role": "user", "content": f"User Prompt: {prompt}"}
+                    ],
+                    response_format={"type": "json_object"}
+                )
+                raw_output = res.choices[0].message.content
 
                 clean_json = raw_output.replace("```json", "").replace("```", "").strip()
                 parsed = json.loads(clean_json)
