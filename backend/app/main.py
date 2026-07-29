@@ -21,7 +21,6 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "*",
         "https://ai-workspace1.netlify.app",
         "http://ai-workspace1.netlify.app",
         "https://ai-workspace-eqfg.onrender.com",
@@ -32,6 +31,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,14 +49,22 @@ def startup():
     Base.metadata.create_all(bind=engine)
     try:
         with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding TEXT;"))
-            conn.commit()
+            if "sqlite" in settings.DATABASE_URL:
+                result = conn.execute(text("PRAGMA table_info(document_chunks);")).fetchall()
+                cols = [r[1] for r in result]
+                if "embedding" not in cols:
+                    conn.execute(text("ALTER TABLE document_chunks ADD COLUMN embedding TEXT;"))
+                    conn.commit()
+            else:
+                conn.execute(text("ALTER TABLE document_chunks ADD COLUMN IF NOT EXISTS embedding TEXT;"))
+                conn.commit()
     except Exception as e:
         print(f"Startup schema migration check: {e}")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "message": "Welcome to AI workspace"
     }
+

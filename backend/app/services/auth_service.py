@@ -1,11 +1,11 @@
-# pyrefly: ignore [missing-import]
+from fastapi import HTTPException, status
 from app.core.security import verify_password
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 # pyrefly: ignore [missing-import]
 from sqlalchemy import select
 from app.models.user import User
-from app.schemas.user import UserCreate,UserLogin
+from app.schemas.user import UserCreate, UserLogin
 from app.core.security import hash_password
 from app.core.security import create_access_token
 
@@ -20,10 +20,10 @@ class AuthService:
         existing_user = db.execute(statement).scalar_one_or_none()
 
         if existing_user:
-            return{
-                "status_code":400,  
-                "message":"Email already exists"
-            }
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered. Please sign in."
+            )
 
         hashed_password = hash_password(user_data.password)
         user = User(
@@ -37,12 +37,11 @@ class AuthService:
         db.refresh(user)
 
         return {
-            "status_code":200,
+            "status_code": 200,
             "message": "User registered successfully"
         }
 
-    def login_user(self,db:Session,user_data:UserLogin):
-
+    def login_user(self, db: Session, user_data: UserLogin):
         statement = select(User).where(
             User.email == user_data.email
         )
@@ -50,22 +49,20 @@ class AuthService:
         existing_user = db.execute(statement).scalar_one_or_none()
 
         if not existing_user:
-            return{
-                "status_code":401,
-                "message":"Invalid credentials"
-            }
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email address or password."
+            )
 
         check_pass = verify_password(user_data.password, existing_user.password)
         if not check_pass:
-            return {
-                "status_code": 401,
-                "message": "Invalid credentials"
-            }
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email address or password."
+            )
 
         access_token = create_access_token(existing_user.id)
         return {
-            "status_code": 200,
-            "message": "Login successful",
             "access_token": access_token,
             "token_type": "bearer"
         }

@@ -35,9 +35,9 @@ def Login(
 
     return auth_service.login_user(db, user_data)
 
-@router.post("/me")
+@router.api_route("/me", methods=["GET", "POST"])
 def get_me(
-    current_user: User =Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     return{
         "id":current_user.id,
