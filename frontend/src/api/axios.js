@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://127.0.0.1:8000",
+    baseURL: import.meta.env.VITE_API_BASE_URL || "https://ai-workspace-eqfg.onrender.com",
 });
 
 // Interceptor to handle Content-Type dynamically for FormData vs JSON
