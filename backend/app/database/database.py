@@ -15,7 +15,7 @@ if db_url.startswith("sqlite"):
     )
 else:
     try:
-        engine = create_engine(db_url, echo=False)
+        engine = create_engine(db_url, echo=False, pool_pre_ping=True, pool_recycle=300)
         with engine.connect() as conn:
             pass
     except Exception as e:
