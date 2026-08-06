@@ -14,11 +14,13 @@ from app.models.user import User
 from app.services.document_parser_service import DocumentParserService
 from app.services.chunk_service import ChunkService
 from app.services.embedding_service import EmbeddingService
+from app.services.vector_db_service import ChromaDBService
 
 
 parser_service = DocumentParserService()
 chunk_service = ChunkService()
 embedding_service = EmbeddingService()
+vector_db = ChromaDBService()
 
 
 class KnowledgeService:
@@ -86,19 +88,31 @@ class KnowledgeService:
         db.commit()
         db.refresh(document)
 
-        # Save chunks with serialized embedding JSON
+        # Save chunks without serialized embedding JSON
+        chunk_indices = []
         for i, chunk_text in enumerate(chunks):
-            emb_vector = embeddings[i] if i < len(embeddings) else []
             chunk = DocumentChunk(
                 document_id=document.id,
                 chunk_index=i,
                 content=chunk_text,
-                embedding=json.dumps(emb_vector) if emb_vector else None
+                embedding=None
             )
             db.add(chunk)
+            chunk_indices.append(i)
 
         db.commit()
         db.refresh(document)
+        
+        # Add to Vector DB
+        if chunks and embeddings:
+            vector_db.add_embeddings(
+                user_id=current_user.id,
+                document_id=document.id,
+                document_name=document.original_filename,
+                chunks=chunks,
+                embeddings=embeddings,
+                chunk_indices=chunk_indices
+            )
 
         return document
 
@@ -129,4 +143,8 @@ class KnowledgeService:
 
         db.delete(doc)
         db.commit()
+        
+        # Also delete from Vector DB
+        vector_db.delete_document(user_id=current_user.id, document_id=document_id)
+        
         return {"message": "Document deleted successfully"}

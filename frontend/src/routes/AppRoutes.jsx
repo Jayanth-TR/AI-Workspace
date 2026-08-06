@@ -9,6 +9,8 @@ import Files from '../pages/Files'
 import Profile from '../pages/Profile'
 import Settings from '../pages/Settings'
 import KnowledgeAssistant from '../pages/KnowledgeAssistant'
+import EstimateGenerator from '../pages/EstimateGenerator'
+import EventImageEnhancer from '../pages/EventImageEnhancer'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 
 const Secure = ({ children }) => <ProtectedRoute><MainLayout>{children}</MainLayout></ProtectedRoute>
@@ -20,10 +22,12 @@ export default function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/" element={<Secure><Dashboard /></Secure>} />
       <Route path="/chat" element={<Secure><ErrorBoundary><Chat /></ErrorBoundary></Secure>} />
+      <Route path="/estimate" element={<Secure><ErrorBoundary><EstimateGenerator /></ErrorBoundary></Secure>} />
       <Route path="/files" element={<Secure><Files /></Secure>} />
       <Route path="/profile" element={<Secure><Profile /></Secure>} />
       <Route path="/settings" element={<Secure><Settings /></Secure>} />
       <Route path="/knowledge" element={<Secure><ErrorBoundary><KnowledgeAssistant /></ErrorBoundary></Secure>} />
+      <Route path="/image-enhancer" element={<Secure><ErrorBoundary><EventImageEnhancer /></ErrorBoundary></Secure>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -1,8 +1,12 @@
 import axios from "axios";
 import { getToken } from "../utils/storage";
 
+const defaultBaseURL = import.meta.env.DEV 
+    ? "http://localhost:8000" 
+    : "https://ai-workspace-eqfg.onrender.com";
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || "https://ai-workspace-eqfg.onrender.com",
+    baseURL: import.meta.env.VITE_API_BASE_URL || defaultBaseURL,
 });
 
 // Interceptor to handle Authorization header & Content-Type dynamically

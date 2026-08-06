@@ -1,4 +1,4 @@
-import { AutoAwesomeRounded, DescriptionOutlined, HomeRounded, LogoutRounded, SettingsOutlined, StarBorderRounded } from '@mui/icons-material'
+import { AutoAwesomeRounded, DescriptionOutlined, HomeRounded, LogoutRounded, RequestQuoteRounded, SettingsOutlined, StarBorderRounded, ImageOutlined } from '@mui/icons-material'
 import { Box, Button, Divider, List, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material'
 import { NavLink, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
@@ -6,8 +6,10 @@ import useAuth from '../../hooks/useAuth'
 const items = [
   { to: '/', label: 'Overview', icon: HomeRounded },
   { to: '/chat', label: 'AI Chat', icon: AutoAwesomeRounded },
-  { to: '/files', label: 'My Files', icon: DescriptionOutlined },
+  { to: '/estimate', label: 'Estimate Generator', icon: RequestQuoteRounded },
+  { to: '/files', label: 'Files Generator', icon: DescriptionOutlined },
   { to: '/knowledge', label: 'Knowledge Assistant', icon: StarBorderRounded },
+  { to: '/image-enhancer', label: 'Event Image Enhancer', icon: ImageOutlined },
   { to: '/settings', label: 'Settings', icon: SettingsOutlined }
 ]
 

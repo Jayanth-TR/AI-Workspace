@@ -12,12 +12,14 @@ from app.models.user import User
 from app.services.embedding_service import EmbeddingService
 from app.services.llm_service import LLMService
 from app.services.file_service import FileService
+from app.services.vector_db_service import ChromaDBService
 
 logger = logging.getLogger(__name__)
 
 embedding_service = EmbeddingService()
 llm_service = LLMService()
 file_service = FileService()
+vector_db = ChromaDBService()
 
 
 class RAGService:
@@ -34,63 +36,22 @@ class RAGService:
         if not clean_query:
             return "Please provide a valid question to query your Knowledge Base."
 
-        # Query document chunks from database
-        chunks_with_docs = []
-        if db and current_user:
-            statement = (
-                select(DocumentChunk, Document)
-                .join(Document, DocumentChunk.document_id == Document.id)
-                .where(Document.user_id == current_user.id)
-            )
-            chunks_with_docs = db.execute(statement).all()
-        elif db:
-            statement = (
-                select(DocumentChunk, Document)
-                .join(Document, DocumentChunk.document_id == Document.id)
-            )
-            chunks_with_docs = db.execute(statement).all()
-
-        if not chunks_with_docs:
-            return (
-                "📚 **Knowledge Base Empty**: No documents found in your Knowledge Base. "
-                "Please upload documents (.pdf, .docx, or .txt) in the Knowledge Assistant section to enable RAG answers."
-            )
-
+        if not current_user:
+            return "You must be logged in to query the Knowledge Base."
+            
         # Generate vector embedding for user query
         query_embedding = embedding_service.generate_embedding(clean_query)
+        if not query_embedding:
+            return "Failed to generate embedding for query."
 
-        # Calculate similarity score for each chunk
-        scored_chunks: List[Dict[str, Any]] = []
-        for chunk, doc in chunks_with_docs:
-            if not chunk.content:
-                continue
+        # Search ChromaDB
+        scored_chunks = vector_db.search_embeddings(
+            query_embedding=query_embedding,
+            user_id=current_user.id,
+            top_k=5
+        )
 
-            sim_score = 0.0
-            if query_embedding and chunk.embedding:
-                try:
-                    chunk_vector = json.loads(chunk.embedding)
-                    sim_score = embedding_service.cosine_similarity(query_embedding, chunk_vector)
-                except Exception as e:
-                    logger.warning(f"Failed to parse chunk embedding: {e}")
-                    sim_score = 0.0
-
-            # Fallback keyword match score if embedding fails or is absent
-            if sim_score == 0.0:
-                query_words = set(clean_query.lower().split())
-                content_words = set(chunk.content.lower().split())
-                common = query_words.intersection(content_words)
-                if common:
-                    sim_score = 0.05 * len(common)
-
-            scored_chunks.append({
-                "score": sim_score,
-                "content": chunk.content,
-                "document_name": doc.original_filename
-            })
-
-        # Sort chunks by relevance score in descending order
-        scored_chunks.sort(key=lambda x: x["score"], reverse=True)
-        top_chunks = [c for c in scored_chunks[:5] if c["score"] > 0.0]
+        top_chunks = [c for c in scored_chunks if c["score"] > 0.0]
 
         if not top_chunks:
             return f"No relevant content found in your Knowledge Base matching: *\"{clean_query}\"*."

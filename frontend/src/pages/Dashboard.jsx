@@ -7,7 +7,8 @@ import {
   ForumOutlined,
   FolderOpenRounded,
   StarBorderRounded,
-  CloseRounded
+  CloseRounded,
+  RequestQuoteRounded
 } from '@mui/icons-material'
 import {
   Box,
@@ -216,6 +217,14 @@ export default function Dashboard() {
               color: '#EC4899',
               bg: '#FDF2F8',
               action: () => setAssistantOpen(true)
+            },
+            {
+              title: 'Estimate Generator',
+              desc: 'Create professional 2-page commercial event estimates.',
+              icon: RequestQuoteRounded,
+              color: '#F59E0B',
+              bg: '#FEF3C7',
+              action: () => navigate('/estimate')
             },
             {
               title: 'File Management',

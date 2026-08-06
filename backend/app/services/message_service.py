@@ -123,12 +123,18 @@ class MessageService:
                 "agent_decision": agent_decision or {"selected_tool": "expense_sheet", "display_name": "📊 Expense Sheet Generator", "reasoning": "Generated Expense Tracker Spreadsheet"}
             }
 
-        # Tool: Proposal Generator
-        if tool == "proposal":
-            file_result = file_service.generate_proposal_doc(prompt_text)
+        # Tool: Estimate Generator
+        if tool == "estimate":
+            from app.services.estimate_service import EstimateService
+            from app.schemas.estimate import EstimateGenerateRequest
+            est_service = EstimateService()
+            req = EstimateGenerateRequest(prompt=prompt_text)
+            estimate_data = est_service.generate_estimate_data(req, db=db, current_user=current_user)
+            file_result = file_service.create_estimate_pdf(estimate_data)
+            
             response_content = (
-                f"📝 **Business Proposal Generated Successfully!**\n\n"
-                f"Your Business Proposal document has been created.\n"
+                f"📝 **Estimate Generated Successfully!**\n\n"
+                f"Your professional Estimate document has been created.\n"
                 f"sandbox:/{file_result['filename']}"
             )
             assistant_message = Message(chat_id=chat.id, role="assistant", content=response_content)
@@ -136,11 +142,12 @@ class MessageService:
             db.commit()
             return {
                 "type": "file",
-                "mode": "proposal",
+                "mode": "estimate",
                 "response": response_content,
                 "file": file_result,
-                "agent_decision": agent_decision or {"selected_tool": "proposal", "display_name": "📝 Business Proposal Generator", "reasoning": "Generated Business Proposal Document"}
+                "agent_decision": agent_decision or {"selected_tool": "estimate", "display_name": "📝 Estimate Generator", "reasoning": "Generated Estimate Document"}
             }
+
 
         # Tool: Standard Chat Assistant (or file fallback check)
         request_type = llm_service.detect_request_type(prompt_text)
