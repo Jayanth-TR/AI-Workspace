@@ -1,3 +1,9 @@
+import bcrypt
+if not hasattr(bcrypt, "__about__"):
+    class _About:
+        __version__ = getattr(bcrypt, "__version__", "4.0.0")
+    bcrypt.__about__ = _About()
+
 # pyrefly: ignore [missing-import]
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
