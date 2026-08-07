@@ -8,6 +8,7 @@ from app.schemas.user import UserCreate, UserLogin
 from app.services.auth_service import AuthService
 from fastapi.security import OAuth2PasswordRequestForm
 from app.models.user import User
+from app.core.config import settings
 
 router = APIRouter(
     prefix="/auth",
@@ -42,5 +43,6 @@ def get_me(
     return{
         "id":current_user.id,
         "name":current_user.name,
-        "email":current_user.email
+        "email":current_user.email,
+        "is_admin": current_user.email == settings.ADMIN_EMAIL
     }

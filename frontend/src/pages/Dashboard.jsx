@@ -24,7 +24,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
@@ -45,6 +47,7 @@ export default function Dashboard() {
   const [question, setQuestion] = useState('')
   const [documents, setDocuments] = useState(initialDocuments)
   const [dragActive, setDragActive] = useState(false)
+  const [isGlobal, setIsGlobal] = useState(false)
 
   const addDocuments = (files) => {
     const nextDocuments = Array.from(files).map((file) => ({
@@ -125,7 +128,7 @@ export default function Dashboard() {
                   fontSize: '1.15rem'
                 }}
               >
-                Your all-in-one AI productivity platform for document generation, intelligent conversations, and knowledge retrieval.
+                Your all-in-one internal AI productivity platform. Use this workspace to securely generate official documents (like proposals and estimates), interact with company knowledge bases, and brainstorm ideas using our AI chat. Please ensure that you do not upload sensitive PII or unapproved client data.
               </Typography>
             </Box>
             <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
@@ -148,28 +151,6 @@ export default function Dashboard() {
                 }}
               >
                 Start AI Chat
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => setAssistantOpen(true)}
-                startIcon={<CloudUploadRounded />}
-                sx={{
-                  borderColor: 'rgba(255, 255, 255, 0.4)',
-                  color: '#FFFFFF',
-                  px: 3.5,
-                  py: 1.5,
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  borderWidth: '1.5px',
-                  '&:hover': {
-                    borderColor: '#FFFFFF',
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '1.5px',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                Upload Documents
               </Button>
             </Stack>
           </Stack>
@@ -355,6 +336,14 @@ export default function Dashboard() {
               Browse Files
               <input hidden accept=".pdf,.docx,.txt,.csv,.xlsx,.xls" multiple type="file" onChange={handleFileChange} ref={fileInputRef} />
             </Button>
+            {user?.is_admin && (
+              <Box mt={2}>
+                <FormControlLabel
+                  control={<Checkbox size="small" checked={isGlobal} onChange={(e) => setIsGlobal(e.target.checked)} />}
+                  label={<Typography fontSize={13}>Make available to all employees (Company Document)</Typography>}
+                />
+              </Box>
+            )}
           </Box>
 
           <Typography fontWeight={700} mb={1.5} fontSize={14}>

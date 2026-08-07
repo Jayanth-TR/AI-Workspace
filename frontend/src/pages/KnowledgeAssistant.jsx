@@ -16,8 +16,11 @@ import {
   IconButton,
   Paper,
   Tooltip,
-  Typography
+  Typography,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material'
+import useAuth from '../hooks/useAuth'
 import api from '../api/axios'
 import FormattedMarkdown from '../components/common/FormattedMarkdown'
 import { downloadFile } from '../services/fileService'
@@ -50,6 +53,8 @@ export default function KnowledgeAssistant() {
   const [dragging, setDragging] = useState(false)
   const [question, setQuestion] = useState('')
   const [messages, setMessages] = useState([])
+  const [isGlobal, setIsGlobal] = useState(false)
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
@@ -94,6 +99,7 @@ export default function KnowledgeAssistant() {
     for (const file of validFiles) {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('is_global', isGlobal)
       try {
         const res = await api.post('/knowledge/upload', formData)
         if (res?.data) {
@@ -231,6 +237,15 @@ export default function KnowledgeAssistant() {
               PDF, DOCX, TXT, XLSX, CSV supported
             </Typography>
           </Paper>
+
+          {user?.is_admin && (
+            <Box sx={{ mt: 1 }}>
+              <FormControlLabel
+                control={<Checkbox size="small" checked={isGlobal} onChange={(e) => setIsGlobal(e.target.checked)} />}
+                label={<Typography fontSize={13}>Make available to all employees (Company Document)</Typography>}
+              />
+            </Box>
+          )}
 
           {/* Uploaded Document List */}
           {Array.isArray(documents) && documents.length > 0 && (

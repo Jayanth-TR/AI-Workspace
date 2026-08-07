@@ -11,6 +11,8 @@ class UploadResponse(BaseModel):
 
     file_type: str
 
+    is_global: bool
+
     class Config:
         from_attributes = True
 

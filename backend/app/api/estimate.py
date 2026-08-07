@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import os
+
+from app.storage.supabase_client import upload_file_to_supabase, supabase_client
+from app.core.config import settings
 
 from app.dependencies import get_db, get_current_user
 from app.models.user import User
@@ -45,6 +49,23 @@ def export_estimate(
 ):
     try:
         result = estimate_service.export_estimate(request)
+        
+        if supabase_client and "file_path" in result and result.get("filename"):
+            file_path = result["file_path"]
+            filename = result["filename"]
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    file_bytes = f.read()
+                ext = filename.split('.')[-1]
+                content_type = "application/octet-stream"
+                if ext == "pdf": content_type = "application/pdf"
+                elif ext == "docx": content_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                
+                supabase_path = f"generated_files/{filename}"
+                upload_file_to_supabase(settings.SUPABASE_BUCKET, supabase_path, file_bytes, content_type)
+                os.remove(file_path)
+                result["file_path"] = supabase_path
+                
         return result
     except Exception as e:
         raise HTTPException(

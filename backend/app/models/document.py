@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # pyrefly: ignore [missing-import]
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey,Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import relationship
 
@@ -58,6 +58,12 @@ class Document(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+    is_global = Column(
+        Boolean,
+        default=False,
+        nullable=False
     )
 
     user = relationship(

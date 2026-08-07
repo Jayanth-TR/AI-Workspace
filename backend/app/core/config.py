@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
 
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_KEY: str = ""
+    SUPABASE_BUCKET: str = "ai-workspace-files"
+
+    ADMIN_EMAIL: str = "admin@company.com"
+
     class Config:
         env_file = ".env"
         extra = "ignore"

@@ -6,7 +6,7 @@ from fastapi import UploadFile, HTTPException
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 # pyrefly: ignore [missing-import]
-from sqlalchemy import select
+from sqlalchemy import select, or_
 
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
@@ -29,8 +29,17 @@ class KnowledgeService:
         self,
         db: Session,
         file: UploadFile,
-        current_user: User
+        current_user: User,
+        is_global: bool = False
     ):
+        from app.core.config import settings
+        
+        if is_global and current_user.email != settings.ADMIN_EMAIL:
+            raise HTTPException(
+                status_code=403,
+                detail="Only administrators can upload global company documents."
+            )
+
         # Create upload folder
         os.makedirs(
             "uploaded_documents",
@@ -58,9 +67,10 @@ class KnowledgeService:
             stored_filename
         )
 
-        # Save file
+        # Save file temporarily
+        file_bytes = file.file.read()
         with open(file_path, "wb") as buffer:
-            buffer.write(file.file.read())
+            buffer.write(file_bytes)
 
         # Extract text
         extracted_text = parser_service.extract_text(
@@ -74,6 +84,16 @@ class KnowledgeService:
         # Generate vector embeddings for chunks
         embeddings = embedding_service.generate_embeddings_batch(chunks) if chunks else []
 
+        from app.storage.supabase_client import upload_file_to_supabase, supabase_client
+        from app.core.config import settings
+
+        if supabase_client:
+            supabase_path = f"documents/{current_user.id}/{stored_filename}"
+            upload_file_to_supabase(settings.SUPABASE_BUCKET, supabase_path, file_bytes, file.content_type)
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            file_path = supabase_path
+
         # Save document metadata
         document = Document(
             user_id=current_user.id,
@@ -81,7 +101,8 @@ class KnowledgeService:
             stored_filename=stored_filename,
             file_type=extension,
             file_path=file_path,
-            extracted_text=extracted_text
+            extracted_text=extracted_text,
+            is_global=is_global
         )
 
         db.add(document)
@@ -111,16 +132,17 @@ class KnowledgeService:
                 document_name=document.original_filename,
                 chunks=chunks,
                 embeddings=embeddings,
-                chunk_indices=chunk_indices
+                chunk_indices=chunk_indices,
+                is_global=is_global
             )
 
         return document
 
     def get_user_documents(self, db: Session, current_user: User):
-        """Fetch all uploaded documents for the logged in user."""
+        """Fetch all uploaded documents for the logged in user, plus global company documents."""
         statement = (
             select(Document)
-            .where(Document.user_id == current_user.id)
+            .where(or_(Document.user_id == current_user.id, Document.is_global == True))
             .order_by(Document.created_at.desc())
         )
         return db.execute(statement).scalars().all()
@@ -135,11 +157,19 @@ class KnowledgeService:
         if not doc:
             raise HTTPException(status_code=404, detail="Document not found")
 
-        if doc.file_path and os.path.exists(doc.file_path):
-            try:
-                os.remove(doc.file_path)
-            except Exception:
-                pass
+        if doc.file_path:
+            from app.storage.supabase_client import delete_file_from_supabase, supabase_client
+            from app.core.config import settings
+            if supabase_client and doc.file_path.startswith("documents/"):
+                try:
+                    delete_file_from_supabase(settings.SUPABASE_BUCKET, doc.file_path)
+                except Exception:
+                    pass
+            elif os.path.exists(doc.file_path):
+                try:
+                    os.remove(doc.file_path)
+                except Exception:
+                    pass
 
         db.delete(doc)
         db.commit()

@@ -31,7 +31,8 @@ class ChromaDBService:
                       document_name: str,
                       chunks: List[str], 
                       embeddings: List[List[float]],
-                      chunk_indices: List[int]):
+                      chunk_indices: List[int],
+                      is_global: bool = False):
         """Adds document chunks and their embeddings to ChromaDB."""
         if not self.collection:
             logger.error("ChromaDB collection is not initialized.")
@@ -54,7 +55,8 @@ class ChromaDBService:
                     "user_id": user_id,
                     "document_id": document_id,
                     "document_name": document_name,
-                    "chunk_index": chunk_indices[i]
+                    "chunk_index": chunk_indices[i],
+                    "is_global": is_global
                 })
                 
             self.collection.upsert(
@@ -78,7 +80,12 @@ class ChromaDBService:
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=top_k,
-                where={"user_id": user_id},
+                where={
+                    "$or": [
+                        {"user_id": user_id},
+                        {"is_global": True}
+                    ]
+                },
                 include=["documents", "metadatas", "distances"]
             )
             

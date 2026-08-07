@@ -54,7 +54,7 @@ class AgentRouterService:
                 "display_name": TOOL_METADATA["web_search"]["display_name"]
             }
 
-        if any(kw in clean_prompt for kw in ["my docs", "my documents", "knowledge base", "uploaded files", "search kb", "rag"]):
+        if any(kw in clean_prompt for kw in ["my docs", "my documents", "knowledge base", "uploaded files", "search kb", "rag", "company policy", "company documents", "company info", "company", "internal guidelines"]):
             return {
                 "selected_tool": "knowledge_base",
                 "reasoning": "Detected internal Knowledge Base retrieval query.",

@@ -4,6 +4,7 @@ from fastapi import (
     Depends,
     UploadFile,
     File,
+    Form,
     HTTPException
 )
 
@@ -36,13 +37,15 @@ rag_service = RAGService()
 )
 def upload_document(
     file: UploadFile = File(...),
+    is_global: bool = Form(False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     return knowledge_service.upload_document(
         db,
         file,
-        current_user
+        current_user,
+        is_global
     )
 
 
