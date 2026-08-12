@@ -1,0 +1,31 @@
+# Virtual Environments & Dependencies
+venv/
+.venv/
+node_modules/
+
+# Frontend (Not needed for backend container build context)
+frontend/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Version Control & Secrets
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Database & Persistent Files
+chroma_db/
+uploaded_documents/
+generated_files/
+ai_workspace.db
+*.db
+
+# Logs
+*.log
+logs/
