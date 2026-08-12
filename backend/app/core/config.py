@@ -21,10 +21,12 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
 
-    SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_KEY: str = ""
-    SUPABASE_BUCKET: str = "ai-workspace-files"
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "us-east-1"
+    AWS_S3_BUCKET: str = ""
 
+    FRONTEND_URL: str = "http://localhost:5173"
     ADMIN_EMAIL: str = "admin@company.com"
 
     class Config:
@@ -34,8 +36,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Fix DATABASE_URL for Render & cloud deployments
-if not settings.DATABASE_URL or "localhost" in settings.DATABASE_URL and not os.getenv("DATABASE_URL"):
+# Configure DATABASE_URL for AWS RDS PostgreSQL & local fallbacks
+if not settings.DATABASE_URL:
     settings.DATABASE_URL = "sqlite:///./ai_workspace.db"
 elif settings.DATABASE_URL.startswith("postgres://"):
     settings.DATABASE_URL = settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)

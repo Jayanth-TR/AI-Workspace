@@ -84,15 +84,15 @@ class KnowledgeService:
         # Generate vector embeddings for chunks
         embeddings = embedding_service.generate_embeddings_batch(chunks) if chunks else []
 
-        from app.storage.supabase_client import upload_file_to_supabase, supabase_client
+        from app.storage.s3_client import upload_file_to_s3, get_s3_client
         from app.core.config import settings
 
-        if supabase_client:
-            supabase_path = f"documents/{current_user.id}/{stored_filename}"
-            upload_file_to_supabase(settings.SUPABASE_BUCKET, supabase_path, file_bytes, file.content_type)
+        if get_s3_client():
+            s3_path = f"documents/{current_user.id}/{stored_filename}"
+            upload_file_to_s3(settings.AWS_S3_BUCKET, s3_path, file_bytes, file.content_type)
             if os.path.exists(file_path):
                 os.remove(file_path)
-            file_path = supabase_path
+            file_path = s3_path
 
         # Save document metadata
         document = Document(
@@ -158,11 +158,11 @@ class KnowledgeService:
             raise HTTPException(status_code=404, detail="Document not found")
 
         if doc.file_path:
-            from app.storage.supabase_client import delete_file_from_supabase, supabase_client
+            from app.storage.s3_client import delete_file_from_s3, get_s3_client
             from app.core.config import settings
-            if supabase_client and doc.file_path.startswith("documents/"):
+            if get_s3_client() and doc.file_path.startswith("documents/"):
                 try:
-                    delete_file_from_supabase(settings.SUPABASE_BUCKET, doc.file_path)
+                    delete_file_from_s3(settings.AWS_S3_BUCKET, doc.file_path)
                 except Exception:
                     pass
             elif os.path.exists(doc.file_path):

@@ -20,19 +20,30 @@ app = FastAPI(
     version=settings.APP_VERSION
 )
 
+import os
+
+cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+if settings.FRONTEND_URL and settings.FRONTEND_URL not in cors_origins:
+    cors_origins.append(settings.FRONTEND_URL)
+
+extra_origins = os.getenv("CORS_ORIGINS", "")
+if extra_origins:
+    for origin in extra_origins.split(","):
+        cleaned = origin.strip()
+        if cleaned and cleaned not in cors_origins:
+            cors_origins.append(cleaned)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ai-workspace1.netlify.app",
-        "http://ai-workspace1.netlify.app",
-        "https://ai-workspace-eqfg.onrender.com",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=cors_origins,
     allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
