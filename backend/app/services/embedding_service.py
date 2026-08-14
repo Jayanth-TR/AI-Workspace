@@ -2,6 +2,7 @@ import json
 import math
 import logging
 from typing import List, Optional
+# pyrefly: ignore [missing-import]
 from openai import OpenAI
 from app.core.config import settings
 
