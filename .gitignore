@@ -23,6 +23,7 @@ yarn-debug.log*
 *.db
 ai_workspace.db
 chroma_db/
+backend/chroma_db/
 generated_files/
 uploaded_documents/
 
