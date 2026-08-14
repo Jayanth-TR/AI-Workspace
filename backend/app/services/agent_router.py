@@ -11,11 +11,14 @@ logger = logging.getLogger(__name__)
 TOOL_CLASSIFICATION_PROMPT = """You are an intelligent AI Agent Router. Your job is to analyze the user prompt and decide which tool to execute.
 
 Available Tools:
-1. "chat": General conversation, answering questions, writing text, math, coding, brainstorming, summarizing without specialized tools.
+1. "chat": General conversation, technical concepts/definitions (e.g. "what is RAG?", "explain machine learning"), general questions, writing text, math, coding, brainstorming, summarizing without specialized tools.
 2. "web_search": Requests for latest real-time news, current events, live information, weather, stock prices, or searching the external internet.
-3. "knowledge_base": Questions referencing "my documents", "knowledge base", "uploaded files", internal company guidelines, or document RAG retrieval.
+3. "knowledge_base": Questions explicitly referencing or asking to search "my documents", "knowledge base", "uploaded files", "in my pdf", or internal company policy/guidelines documents.
 
-Instructions:
+CRITICAL INSTRUCTIONS:
+- Do NOT select "knowledge_base" for general concept questions like "what is RAG?", "how does RAG work?", "what is AI?", or general knowledge definitions. Select "chat" instead.
+- Only select "knowledge_base" if the user is explicitly asking to search, query, or extract data from their uploaded files or internal documents.
+
 Return ONLY a valid JSON object with the following structure (no markdown formatting, no code fences):
 {
   "selected_tool": "<one of: chat, web_search, knowledge_base>",
@@ -54,7 +57,7 @@ class AgentRouterService:
                 "display_name": TOOL_METADATA["web_search"]["display_name"]
             }
 
-        if any(kw in clean_prompt for kw in ["my docs", "my documents", "knowledge base", "uploaded files", "search kb", "rag", "company policy", "company documents", "company info", "company", "internal guidelines"]):
+        if any(kw in clean_prompt for kw in ["my docs", "my documents", "knowledge base", "uploaded files", "search kb", "my file", "my pdf", "in my document", "from my file", "company policy", "internal guidelines"]):
             return {
                 "selected_tool": "knowledge_base",
                 "reasoning": "Detected internal Knowledge Base retrieval query.",

@@ -51,10 +51,21 @@ class RAGService:
             top_k=5
         )
 
-        top_chunks = [c for c in scored_chunks if c["score"] > 0.0]
+        # Enforce similarity threshold to discard irrelevant chunks (score >= 0.35)
+        RELEVANCE_THRESHOLD = 0.35
+        top_chunks = [c for c in scored_chunks if c.get("score", 0.0) >= RELEVANCE_THRESHOLD]
 
         if not top_chunks:
-            return f"No relevant content found in your Knowledge Base matching: *\"{clean_query}\"*."
+            # Fallback to general LLM answer if no relevant documents match
+            try:
+                fallback_response = llm_service.generate_response([
+                    {"role": "system", "content": "You are a helpful AI assistant. The user queried the Knowledge Base, but no relevant content matching their question was found in their uploaded documents. Briefly inform the user that their uploaded documents do not contain relevant information for this query, and then provide a clear, accurate answer using general knowledge."},
+                    {"role": "user", "content": clean_query}
+                ])
+                return f"ℹ️ *Note: No relevant information was found in your uploaded Knowledge Base documents for this query. Answering based on general AI knowledge:*\n\n{fallback_response.strip()}"
+            except Exception as fe:
+                logger.error(f"Fallback response generation failed: {fe}")
+                return f"No relevant content found in your Knowledge Base matching: *\"{clean_query}\"*."
 
         # Format Context and Source References
         context_blocks: List[str] = []
@@ -70,10 +81,11 @@ class RAGService:
             f"User Question: {clean_query}\n\n"
             f"Retrieved Knowledge Base Context:\n{formatted_context}\n\n"
             f"Instructions:\n"
-            f"1. Answer the user's question clearly, thoroughly, and accurately using ONLY the provided Knowledge Base context above.\n"
-            f"2. Format your output into clean Markdown sections with headers (e.g., ## Overview, ## Key Solutions & Services, ## Key Features).\n"
-            f"3. Use bullet points (- ) and bold formatting for important terms and highlights.\n"
-            f"4. If the provided context does not contain enough information to answer the question, state that clearly."
+            f"1. Answer the user's question clearly, thoroughly, and accurately using the provided Knowledge Base context above.\n"
+            f"2. If the context is relevant, prioritize it. If the context is missing specific details, state what the documents cover and answer using general knowledge clearly.\n"
+            f"3. Do NOT make up false definitions or hallucinate acronym meanings from unrelated document text.\n"
+            f"4. Format your output into clean Markdown sections with headers (e.g., ## Overview, ## Key Solutions & Services, ## Key Features).\n"
+            f"5. Use bullet points (- ) and bold formatting for important terms and highlights."
         )
 
         try:
